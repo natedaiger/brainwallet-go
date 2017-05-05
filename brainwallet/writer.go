@@ -6,6 +6,7 @@ package brainwallet
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -15,10 +16,12 @@ import (
 func Writer(file string, output chan string, done chan int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
+	fmt.Printf("WRITER STARTED\n")
 waitfordone:
 	for {
 		select {
 		case line := <-output: // received line from output channel
+			fmt.Printf("Writing line:\n%s\n", line)
 
 			outputFile, err := os.OpenFile(file, os.O_WRONLY|os.O_APPEND, 0644) // Append file
 			if err != nil {
@@ -32,6 +35,8 @@ waitfordone:
 			outputFile.Close()
 
 		case <-done: // Everything is done. Shutdown.
+
+			fmt.Println("DONE WRITING.")
 			break waitfordone
 		}
 	}

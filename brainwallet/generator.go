@@ -7,6 +7,7 @@ package brainwallet
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"hash"
 	"math/big"
 	"sync"
@@ -17,14 +18,16 @@ import (
 )
 
 // Generator
-func Generator(input chan string, output chan string, done chan int, wg *sync.WaitGroup) {
+func Generator(basePhrase string, input chan string, output chan string, done chan int, wg *sync.WaitGroup) {
 
 	defer wg.Done()
 
 waitfordone:
 	for {
 		select {
-		case passphrase := <-input: // Receive passphrase
+		case phraseID := <-input: // Receive passphrase
+			passphrase := basePhrase + phraseID
+			fmt.Printf("\n\npassphrase to hash: %s\n\n", passphrase)
 
 			hasher := sha256.New() // SHA256
 			sha := SHA256(hasher, []byte(passphrase))
@@ -50,7 +53,7 @@ waitfordone:
 
 			// line := "1" + base58BitcoinAddress + ":" + privateKey + ":" + wif + ":" + passphrase // Create a line for io output
 			line := "1" + base58BitcoinAddress + ":" + privateKey + ":" + wif // Create a line for io output
-			line = wif
+			// line = wif
 			output <- line // Send line to output channel
 
 		case <-done: // Everything is done. Break out from the loop.

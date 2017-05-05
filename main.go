@@ -6,9 +6,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"strconv"
 	"sync"
 	"time"
+
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/natedaiger/brainwallet-go/brainwallet"
 )
@@ -32,6 +35,14 @@ func main() {
 
 	// Initialize
 	brainwallet.Init()
+
+	fmt.Printf("\nEnter your passphrase: ")
+	phraseBytes, err := terminal.ReadPassword(0)
+	if err != nil {
+		panic(err)
+	}
+	phrase := string(phraseBytes)
+	fmt.Printf("\nPhrase: %s\n\n", phrase)
 
 	// Log Params
 	logger.Write("------------------------")
@@ -57,7 +68,7 @@ func main() {
 	// Start goroutines
 	logger.Write("[STATE] Starting Goroutines")
 	go brainwallet.Scanner(*inputFile, input, done, &wg)
-	go brainwallet.Generator(input, output, done, &wg)
+	go brainwallet.Generator(phrase, input, output, done, &wg)
 	go brainwallet.Writer(*outputFile, output, done, &wg)
 	go brainwallet.PrintStatistics(startTime, done, &wg)
 

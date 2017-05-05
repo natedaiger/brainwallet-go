@@ -5,30 +5,31 @@
 package brainwallet
 
 import (
-        "log"
-        "os"
 	"bufio"
+	"fmt"
+	"log"
+	"os"
 	"sync"
 )
 
 // File Scanner
 func Scanner(inputFile string, input chan string, done chan int, wg *sync.WaitGroup) {
-        defer wg.Done()
-        counter := 0				// Counter for read lines
+	defer wg.Done()
+	counter := 0 // Counter for read lines
 
-        file, err := os.Open(inputFile)		// Open file
-        if err != nil {
-                log.Fatal(err)
-        }
-        defer file.Close()
-        scanner := bufio.NewScanner(file)	// Scanner
+	file, err := os.Open(inputFile) // Open file
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file) // Scanner
 
-        for scanner.Scan() {
-                counter += 1
-                input <- scanner.Text()		// Send read line to input channel
-        }
+	for scanner.Scan() {
+		fmt.Printf("Scanner counter: %d\n", counter)
+		counter += 1
+		input <- scanner.Text() // Send read line to input channel
+	}
 
-        done <- counter				// Everything is done. Send shutdown command to channel.
+	done <- counter // Everything is done. Send shutdown command to channel.
 
 }
-
