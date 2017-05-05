@@ -5,46 +5,45 @@
 package brainwallet
 
 import (
-        "log"
-        "sync"
-        "bufio"
-        "os"
+	"bufio"
+	"log"
+	"os"
+	"sync"
 )
 
 // File Writer
 func Writer(file string, output chan string, done chan int, wg *sync.WaitGroup) {
-        defer wg.Done()
+	defer wg.Done()
 
-        waitfordone:
-        for {
-                select {
-                case line := <- output:		// received line from output channel
+waitfordone:
+	for {
+		select {
+		case line := <-output: // received line from output channel
 
-                        outputFile, err := os.OpenFile(file, os.O_WRONLY | os.O_APPEND, 0644)	// Append file
-                        if err != nil {
-                                log.Println(err)
-                                return
-                        }
-                        writer := bufio.NewWriter(outputFile)
+			outputFile, err := os.OpenFile(file, os.O_WRONLY|os.O_APPEND, 0644) // Append file
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			writer := bufio.NewWriter(outputFile)
 
-                        outputFile.WriteString(line + "\n")	// Write line to file
-                        writer.Flush()				// Flush writer
-                        outputFile.Close()
+			outputFile.WriteString(line + "\n") // Write line to file
+			writer.Flush()                      // Flush writer
+			outputFile.Close()
 
-                case <- done:					// Everything is done. Shutdown.
-                        break waitfordone
-                }
-        }
+		case <-done: // Everything is done. Shutdown.
+			break waitfordone
+		}
+	}
 }
 
 // File Creator
 func CreateFile(file string) (err error) {
-        outputFile, err := os.Create(file)			// Create a file
-        if err != nil {
-                log.Fatal(err)
-                return
-        }
-        defer outputFile.Close()
-        return
+	outputFile, err := os.Create(file) // Create a file
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	defer outputFile.Close()
+	return
 }
-

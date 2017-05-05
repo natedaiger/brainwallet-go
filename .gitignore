@@ -22,3 +22,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+passphrases.txt
+output.txt
+brainwallet-go
