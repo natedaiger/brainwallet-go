@@ -6,7 +6,6 @@ package brainwallet
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -25,11 +24,10 @@ func Scanner(inputFile string, input chan string, done chan int, wg *sync.WaitGr
 	scanner := bufio.NewScanner(file) // Scanner
 
 	for scanner.Scan() {
-		fmt.Printf("Scanner counter: %d\n", counter)
 		counter += 1
 		input <- scanner.Text() // Send read line to input channel
 	}
-
-	done <- counter // Everything is done. Send shutdown command to channel.
-
+	close(input)
+	done <- counter
+	close(done)
 }

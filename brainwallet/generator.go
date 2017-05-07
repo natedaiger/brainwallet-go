@@ -7,7 +7,6 @@ package brainwallet
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"hash"
 	"math/big"
 	"sync"
@@ -18,48 +17,41 @@ import (
 )
 
 // Generator
-func Generator(basePhrase string, input chan string, output chan string, done chan int, wg *sync.WaitGroup) {
-
+func Generator(basePhrase string, input chan string, output chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-waitfordone:
-	for {
-		select {
-		case phraseID := <-input: // Receive passphrase
-			passphrase := basePhrase + phraseID
-			fmt.Printf("\n\npassphrase to hash: %s\n\n", passphrase)
+	for phraseID := range input {
+		passphrase := basePhrase + phraseID
 
-			hasher := sha256.New() // SHA256
-			sha := SHA256(hasher, []byte(passphrase))
+		hasher := sha256.New() // SHA256
+		sha := SHA256(hasher, []byte(passphrase))
 
-			publicKeyBytes := secp256k1.UncompressedPubkeyFromSeckey(sha) // ECDSA
-			privateKey := hex.EncodeToString(sha)                         // Store Private Key
-			// wif := base58.Encode(bigintPrivKey.Bytes())
-			wif := b58checkencode(0x80, sha)
+		publicKeyBytes := secp256k1.UncompressedPubkeyFromSeckey(sha) // ECDSA
+		privateKey := hex.EncodeToString(sha)                         // Store Private Key
+		_ = privateKey
+		// wif := base58.Encode(bigintPrivKey.Bytes())
+		wif := b58checkencode(0x80, sha)
 
-			sha = SHA256(hasher, publicKeyBytes) // SHA256
-			ripe := RIPEMD160(sha)               // RIPEMD160
+		sha = SHA256(hasher, publicKeyBytes) // SHA256
+		ripe := RIPEMD160(sha)               // RIPEMD160
 
-			versionripe := "00" + hex.EncodeToString(ripe) // Add version byte 0x00
-			decoded, _ := hex.DecodeString(versionripe)
+		versionripe := "00" + hex.EncodeToString(ripe) // Add version byte 0x00
+		decoded, _ := hex.DecodeString(versionripe)
 
-			sha = SHA256(hasher, SHA256(hasher, decoded)) // SHA256x2
+		sha = SHA256(hasher, SHA256(hasher, decoded)) // SHA256x2
 
-			addressChecksum := hex.EncodeToString(sha)[0:8] // Concencate Address Checksum and Extended RIPEMD160 Hash
-			hexBitcoinAddress := versionripe + addressChecksum
+		addressChecksum := hex.EncodeToString(sha)[0:8] // Concencate Address Checksum and Extended RIPEMD160 Hash
+		hexBitcoinAddress := versionripe + addressChecksum
 
-			bigintBitcoinAddress, _ := new(big.Int).SetString((hexBitcoinAddress), 16) // Base58Encode the Address
-			base58BitcoinAddress := base58.Encode(bigintBitcoinAddress.Bytes())
+		bigintBitcoinAddress, _ := new(big.Int).SetString((hexBitcoinAddress), 16) // Base58Encode the Address
+		base58BitcoinAddress := base58.Encode(bigintBitcoinAddress.Bytes())
 
-			// line := "1" + base58BitcoinAddress + ":" + privateKey + ":" + wif + ":" + passphrase // Create a line for io output
-			line := "1" + base58BitcoinAddress + ":" + privateKey + ":" + wif // Create a line for io output
-			// line = wif
-			output <- line // Send line to output channel
-
-		case <-done: // Everything is done. Break out from the loop.
-			break waitfordone
-		}
+		// line := "1" + base58BitcoinAddress + ":" + privateKey + ":" + wif + ":" + passphrase // Create a line for io output
+		line := "1" + base58BitcoinAddress + ":" + wif // Create a line for io output
+		// line = wif
+		output <- line // Send line to output channel
 	}
+	close(output)
 }
 
 // b58checkencode encodes version ver and byte slice b into a base-58 check encoded string.

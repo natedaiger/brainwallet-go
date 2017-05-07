@@ -42,7 +42,6 @@ func main() {
 		panic(err)
 	}
 	phrase := string(phraseBytes)
-	fmt.Printf("\nPhrase: %s\n\n", phrase)
 
 	// Log Params
 	logger.Write("------------------------")
@@ -60,16 +59,13 @@ func main() {
 
 	// Create WaitGroup
 	var wg sync.WaitGroup
-	wg.Add(2)
-
-	// Create output file
-	brainwallet.CreateFile(*outputFile)
+	wg.Add(4)
 
 	// Start goroutines
 	logger.Write("[STATE] Starting Goroutines")
 	go brainwallet.Scanner(*inputFile, input, done, &wg)
-	go brainwallet.Generator(phrase, input, output, done, &wg)
-	go brainwallet.Writer(*outputFile, output, done, &wg)
+	go brainwallet.Generator(phrase, input, output, &wg)
+	go brainwallet.Writer(*outputFile, output, &wg)
 	go brainwallet.PrintStatistics(startTime, done, &wg)
 
 	// Wait for finish
